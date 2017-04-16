@@ -286,6 +286,47 @@
 (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
 
 ;; load theme
+(defvar hc-zenburn-colors-alist
+  '(("hc-zenburn-fg+1"     . "#FFFFEF")
+    ("hc-zenburn-fg"       . "#DCDCCC")
+    ("hc-zenburn-fg-1"     . "#70705E")
+    ("hc-zenburn-bg-2"     . "#000000")
+    ("hc-zenburn-bg-1"     . "#202020")
+    ("hc-zenburn-bg-05"    . "#2D2D2D")
+    ("hc-zenburn-bg"       . "#040404")
+    ("hc-zenburn-bg+05"    . "#383838")
+    ("hc-zenburn-bg+1"     . "#3E3E3E")
+    ("hc-zenburn-bg+2"     . "#4E4E4E")
+    ("hc-zenburn-bg+3"     . "#5E5E5E")
+    ("hc-zenburn-red+1"    . "#E9B0B0")
+    ("hc-zenburn-red"      . "#D9A0A0")
+    ("hc-zenburn-red-1"    . "#C99090")
+    ("hc-zenburn-red-2"    . "#B98080")
+    ("hc-zenburn-red-3"    . "#A97070")
+    ("hc-zenburn-red-4"    . "#996060")
+    ("hc-zenburn-orange"   . "#ECBC9C")
+    ("hc-zenburn-yellow"   . "#FDECBC")
+    ("hc-zenburn-yellow-1" . "#EDDCAC")
+    ("hc-zenburn-yellow-2" . "#DDCC9C")
+    ("hc-zenburn-green-1"  . "#6C8C6C")
+    ("hc-zenburn-green"    . "#8CAC8C")
+    ("hc-zenburn-green+1"  . "#9CBF9C")
+    ("hc-zenburn-green+2"  . "#ACD2AC")
+    ("hc-zenburn-green+3"  . "#BCE5BC")
+    ("hc-zenburn-green+4"  . "#CCF8CC")
+    ("hc-zenburn-cyan"     . "#A0EDF0")
+    ("hc-zenburn-blue+1"   . "#9CC7FB")
+    ("hc-zenburn-blue"     . "#99DDE0")
+    ("hc-zenburn-blue-1"   . "#89C5C8")
+    ("hc-zenburn-blue-2"   . "#79ADB0")
+    ("hc-zenburn-blue-3"   . "#699598")
+    ("hc-zenburn-blue-4"   . "#597D80")
+    ("hc-zenburn-blue-5"   . "#436D6D")
+    ("hc-zenburn-magenta"  . "#E090C7"))
+  "List of Hc-Zenburn colors.
+Each element has the form (NAME . HEX).
+`+N' suffixes indicate a color is lighter.
+`-N' suffixes indicate a color is darker.")
 (load-theme 'hc-zenburn t)
 
 ;; hide menu bar
@@ -294,7 +335,6 @@
 ;; helm
 (require 'helm-config)
 (helm-mode 1)
-
 (define-key global-map (kbd "M-x")     'helm-M-x)
 (define-key global-map (kbd "C-x C-f") 'helm-find-files)
 (define-key global-map (kbd "C-x C-r") 'helm-recentf)
@@ -307,3 +347,78 @@
 (define-key helm-find-files-map (kbd "C-h") 'delete-backward-char)
 (define-key helm-find-files-map (kbd "TAB") 'helm-execute-persistent-action)
 (define-key helm-read-file-map (kbd "TAB") 'helm-execute-persistent-action)
+
+;; yaml mode
+(require 'yaml-mode)
+(add-to-list 'auto-mode-alist '("\\.ya?ml$" . yaml-mode))
+(define-key yaml-mode-map "\C-m" 'newline-and-indent)
+
+
+;; tabbar
+(require 'tabbar)
+(tabbar-mode)
+(tabbar-mwheel-mode nil)                  ;; マウスホイール無効
+(setq tabbar-buffer-groups-function nil)  ;; グループ無効
+(setq tabbar-use-images nil)              ;; 画像を使わない
+;;----- キーに割り当てる
+;; 何かに設定したい…
+
+;;----- 左側のボタンを消す
+(dolist (btn '(tabbar-buffer-home-button
+               tabbar-scroll-left-button
+               tabbar-scroll-right-button))
+  (set btn (cons (cons "" nil)
+                 (cons "" nil))))
+;;----- タブのセパレーターの長さ
+(setq tabbar-separator '(2.0))
+;;----- 表示するバッファ
+(defun my-tabbar-buffer-list ()
+  (delq nil
+        (mapcar #'(lambda (b)
+                    (cond
+                     ;; Always include the current buffer.
+                     ((eq (current-buffer) b) b)
+                     ((buffer-file-name b) b)
+                     ((char-equal ?\  (aref (buffer-name b) 0)) nil)
+                     ((equal "*scratch*" (buffer-name b)) b) ; *scratch*バッファは表示する
+                     ((char-equal ?* (aref (buffer-name b) 0)) nil) ; それ以外の * で始まるバッファは表示しない
+                     ((buffer-live-p b) b)))
+                (buffer-list))))
+(setq tabbar-buffer-list-function 'my-tabbar-buffer-list)
+
+;; js, jsx
+;; .js, .jsx を web-mode で開く
+(add-to-list 'auto-mode-alist '("\\.js[x]?$" . web-mode))
+
+;; 拡張子 .js でもJSX編集モードに
+(setq web-mode-content-types-alist
+      '(("jsx" . "\\.js[x]?\\'")))
+
+;; インデント
+(add-hook 'web-mode-hook
+          '(lambda ()
+             (setq web-mode-attr-indent-offset nil)
+             (setq web-mode-markup-indent-offset 2)
+             (setq web-mode-css-indent-offset 2)
+             (setq web-mode-code-indent-offset 2)
+             (setq web-mode-sql-indent-offset 2)
+             (setq indent-tabs-mode nil)
+             (setq tab-width 2)
+          ))
+;; 色
+(custom-set-faces
+ '(web-mode-doctype-face           ((t (:foreground "#4A8ACA"))))
+ '(web-mode-html-tag-face          ((t (:foreground "#4A8ACA"))))
+ '(web-mode-html-attr-name-face    ((t (:foreground "#87CEEB"))))
+ '(web-mode-html-attr-equal-face   ((t (:foreground "#FFFFFF"))))
+ '(web-mode-html-attr-value-face   ((t (:foreground "#D78181"))))
+ '(web-mode-comment-face           ((t (:foreground "#587F35"))))
+ '(web-mode-server-comment-face    ((t (:foreground "#587F35"))))
+
+ '(web-mode-css-at-rule-face       ((t (:foreground "#DFCF44"))))
+ '(web-mode-comment-face           ((t (:foreground "#587F35"))))
+ '(web-mode-css-selector-face      ((t (:foreground "#DFCF44"))))
+ '(web-mode-css-pseudo-class       ((t (:foreground "#DFCF44"))))
+ '(web-mode-css-property-name-face ((t (:foreground "#87CEEB"))))
+ '(web-mode-css-string-face        ((t (:foreground "#D78181"))))
+ )
