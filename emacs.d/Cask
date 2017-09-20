@@ -41,3 +41,8 @@
 (depends-on "helm")
 (depends-on "yaml-mode")
 (depends-on "tabbar")
+(depends-on "company-tern")
+(depends-on "js2-mode")
+(depends-on "monokai-theme")
+(depends-on "py-isort")
+(depends-on "lua-mode")

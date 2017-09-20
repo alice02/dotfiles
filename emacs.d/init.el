@@ -19,7 +19,26 @@
 (prefer-coding-system 'utf-8)
 
 ;; テーマの設定
-;;(load-theme 'deeper-blue' t)
+(load-theme 'monokai t)
+  (setq ;; foreground and background
+        monokai-foreground     "#ABB2BF"
+        monokai-background     "#282C34"
+        ;; highlights and comments
+        monokai-comments       "#F8F8F0"
+        monokai-emphasis       "#282C34"
+        monokai-highlight      "#FFB269"
+        monokai-highlight-alt  "#66D9EF"
+        monokai-highlight-line "#1B1D1E"
+        monokai-line-number    "#F8F8F0"
+        ;; colours
+        monokai-blue           "#61AFEF"
+        monokai-cyan           "#56B6C2"
+        monokai-green          "#98C379"
+        monokai-gray           "#3E4451"
+        monokai-violet         "#C678DD"
+        monokai-red            "#E06C75"
+        monokai-orange         "#D19A66"
+        monokai-yellow         "#E5C07B")
 
 ;; スタートアップメッセージを表示させない
 (setq inhibit-startup-message t)
@@ -42,17 +61,6 @@
 ;; C-hをbackspaceに割り当てる
 (global-set-key "\C-h" 'delete-backward-char)
 
-;; ウィンドウ内に収まらないときだけ、カッコ内も光らせる
-;;(setq show-paren-style 'mixed)
-;;(set-face-background 'show-paren-match-face "grey")
-;;(set-face-foreground 'show-paren-match-face "black")
-
-;; スペース、タブなどを可視化する
-;;(global-whitespace-mode 1)
-
-;; スクロールは１行ごとに
-;;(setq scroll-conservatively 1)
-
 ;; "yes or no" の選択を "y or n" にする
 (fset 'yes-or-no-p 'y-or-n-p)
 
@@ -60,26 +68,21 @@
 (global-linum-mode t)
 (setq linum-format "%4d ")
 
-;; トラックパッド用のスクロール設定
-(defun scroll-down-with-lines ()
-  "" (interactive) (scroll-down 3))
-(defun scroll-up-with-lines ()
-  "" (interactive) (scroll-up 3))
-(global-set-key [wheel-up] 'scroll-down-with-lines)
-(global-set-key [wheel-down] 'scroll-up-with-lines)
-(global-set-key [double-wheel-up] 'scroll-down-with-lines)
-(global-set-key [double-wheel-down] 'scroll-up-with-lines)
-(global-set-key [triple-wheel-up] 'scroll-down-with-lines)
-(global-set-key [triple-wheel-down] 'scroll-up-with-lines)
-
-;; バックアップファイルの保存先を変更
-(setq backup-directory-alist '((".*" . "~/.emacs.d/backup")))
- ;; 番号付けによる複数保存
- (setq version-control     t)  ;; 実行の有無
- (setq kept-new-versions   5)  ;; 最新の保持数
- (setq kept-old-versions   1)  ;; 最古の保持数
- (setq delete-old-versions t)  ;; 範囲外を削除
-
+;; ;; バックアップファイルの保存先を変更
+;; (setq backup-directory-alist '((".*" . "~/.emacs.d/backup")))
+;;  ;; 番号付けによる複数保存
+;;  (setq version-control     t)  ;; 実行の有無
+;;  (setq kept-new-versions   5)  ;; 最新の保持数
+;;  (setq kept-old-versions   1)  ;; 最古の保持数
+;;  (setq delete-old-versions t)  ;; 範囲外を削除
+;; バックアップ保存先の変更
+(setq backup-directory-alist '(("." . "~/.emacs.d/backup"))
+  backup-by-copying t    ; Don't delink hardlinks
+  version-control t      ; Use version numbers on backups
+  delete-old-versions t  ; Automatically delete excess backups
+  kept-new-versions 20   ; how many of the newest versions to keep
+  kept-old-versions 5    ; and how many of the old
+  )
 ;; Company
 (require 'company)
 (global-company-mode) ; 全バッファで有効にする
@@ -116,12 +119,8 @@
 (define-key company-active-map [backtab] 'company-select-previous) ; おまけ
 
 ;; Golang関係
-;; PATHを通しておく
-;; go getで取得したものを使いたいため
-;; パスを通す
 (require 'exec-path-from-shell)
 (exec-path-from-shell-initialize)
-;; 必要なパッケージのロード
 (require 'go-mode)
 (require 'company-go)
 ;; 諸々の有効化、設定
@@ -190,7 +189,6 @@
 (require 'py-autopep8)
 (setq py-autopep8-options '("--max-line-length=200"))
 (setq flycheck-flake8-maximum-line-length 200)
-;; (py-autopep8-enable-on-save)
 (add-hook 'python-mode-hook 'py-autopep8-enable-on-save)
 
 (require 'flymake-python-pyflakes)
@@ -206,9 +204,20 @@
            (local-file (file-relative-name
                         temp-file
                         (file-name-directory buffer-file-name))))
-      (list "$HOME/.pyenv/shims/flake8"  (list local-file))))
+      (list "$HOME/.anyenv/envs/pyenv/shims/pyflakes"  (list local-file))))
   (add-to-list 'flymake-allowed-file-name-masks
                '("\\.py\\'" flymake-pyflakes-init)))
+
+; show message on mini-buffer
+(defun flymake-show-help ()
+  (when (get-char-property (point) 'flymake-overlay)
+    (let ((help (get-char-property (point) 'help-echo)))
+      (if help (message "%s" help)))))
+(add-hook 'post-command-hook 'flymake-show-help)
+
+(require 'py-isort)
+(add-hook 'before-save-hook 'py-isort-before-save)
+
 ; show message on mini-buffer
 (defun flymake-show-help ()
   (when (get-char-property (point) 'flymake-overlay)
@@ -234,100 +243,7 @@
                     :background "#ffaeb9"
                     :inherit 'mode-line)
 
-
-;; (defun powerline-my-theme ()
-;;   "Setup the my mode-line."
-;;   (interactive)
-;;   (setq powerline-current-separator 'utf-8)
-;;   (setq-default mode-line-format
-;;                 '("%e"
-;;                   (:eval
-;;                    (let* ((active (powerline-selected-window-active))
-;;                           (mode-line (if active 'mode-line 'mode-line-inactive))
-;;                           (face1 (if active 'mode-line-1-fg 'mode-line-2-fg))
-;;                           (face2 (if active 'mode-line-1-arrow 'mode-line-2-arrow))
-;;                           (separator-left (intern (format "powerline-%s-%s"
-;;                                                           (powerline-current-separator)
-;;                                                           (car powerline-default-separator-dir))))
-;;                           (lhs (list (powerline-raw " " face1)
-;;                                      (powerline-major-mode face1)
-;;                                      (powerline-raw " " face1)
-;;                                      (funcall separator-left face1 face2)
-;;                                      (powerline-buffer-id nil )
-;;                                      (powerline-raw " [ ")
-;;                                      (powerline-raw mode-line-mule-info nil)
-;;                                      (powerline-raw "%*" nil)
-;;                                      (powerline-raw " |")
-;;                                      (powerline-process nil)
-;;                                      (powerline-vc)
-;;                                      (powerline-raw " ]")
-;;                                      ))
-;;                           (rhs (list (powerline-raw "%4l" 'l)
-;;                                      (powerline-raw ":" 'l)
-;;                                      (powerline-raw "%2c" 'l)
-;;                                      (powerline-raw " | ")
-;;                                      (powerline-raw "%6p" )
-;;                                      (powerline-raw " ")
-;;                                      )))
-;; (concat (powerline-render lhs)
-;; 	(powerline-fill nil (powerline-width rhs))
-;; 	(powerline-render rhs)))))))
-;; (defun make/set-face (face-name fg-color bg-color weight)
-;;   (make-face face-name)
-;;   (set-face-attribute face-name nil
-;;                       :foreground fg-color :background bg-color :box nil :weight weight))
-;; (make/set-face 'mode-line-1-fg "#282C34" "#EF8300" 'bold)
-;; (make/set-face 'mode-line-2-fg "#AAAAAA" "#2F343D" 'bold)
-;; (make/set-face 'mode-line-1-arrow  "#AAAAAA" "#3E4451" 'bold) ;;この二行に同じ色を指定
-;; (make/set-face 'mode-line-2-arrow  "#AAAAAA" "#3E4451" 'bold) ;;この二行に同じ色を指定
-;; (powerline-my-theme)
-
-;; rainbow-delimiters-mode
 (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
-
-;; load theme
-(defvar hc-zenburn-colors-alist
-  '(("hc-zenburn-fg+1"     . "#FFFFEF")
-    ("hc-zenburn-fg"       . "#DCDCCC")
-    ("hc-zenburn-fg-1"     . "#70705E")
-    ("hc-zenburn-bg-2"     . "#000000")
-    ("hc-zenburn-bg-1"     . "#202020")
-    ("hc-zenburn-bg-05"    . "#2D2D2D")
-    ("hc-zenburn-bg"       . "#040404")
-    ("hc-zenburn-bg+05"    . "#383838")
-    ("hc-zenburn-bg+1"     . "#3E3E3E")
-    ("hc-zenburn-bg+2"     . "#4E4E4E")
-    ("hc-zenburn-bg+3"     . "#5E5E5E")
-    ("hc-zenburn-red+1"    . "#E9B0B0")
-    ("hc-zenburn-red"      . "#D9A0A0")
-    ("hc-zenburn-red-1"    . "#C99090")
-    ("hc-zenburn-red-2"    . "#B98080")
-    ("hc-zenburn-red-3"    . "#A97070")
-    ("hc-zenburn-red-4"    . "#996060")
-    ("hc-zenburn-orange"   . "#ECBC9C")
-    ("hc-zenburn-yellow"   . "#FDECBC")
-    ("hc-zenburn-yellow-1" . "#EDDCAC")
-    ("hc-zenburn-yellow-2" . "#DDCC9C")
-    ("hc-zenburn-green-1"  . "#6C8C6C")
-    ("hc-zenburn-green"    . "#8CAC8C")
-    ("hc-zenburn-green+1"  . "#9CBF9C")
-    ("hc-zenburn-green+2"  . "#ACD2AC")
-    ("hc-zenburn-green+3"  . "#BCE5BC")
-    ("hc-zenburn-green+4"  . "#CCF8CC")
-    ("hc-zenburn-cyan"     . "#A0EDF0")
-    ("hc-zenburn-blue+1"   . "#9CC7FB")
-    ("hc-zenburn-blue"     . "#99DDE0")
-    ("hc-zenburn-blue-1"   . "#89C5C8")
-    ("hc-zenburn-blue-2"   . "#79ADB0")
-    ("hc-zenburn-blue-3"   . "#699598")
-    ("hc-zenburn-blue-4"   . "#597D80")
-    ("hc-zenburn-blue-5"   . "#436D6D")
-    ("hc-zenburn-magenta"  . "#E090C7"))
-  "List of Hc-Zenburn colors.
-Each element has the form (NAME . HEX).
-`+N' suffixes indicate a color is lighter.
-`-N' suffixes indicate a color is darker.")
-(load-theme 'hc-zenburn t)
 
 ;; hide menu bar
 (menu-bar-mode -1)
@@ -361,7 +277,8 @@ Each element has the form (NAME . HEX).
 (setq tabbar-buffer-groups-function nil)  ;; グループ無効
 (setq tabbar-use-images nil)              ;; 画像を使わない
 ;;----- キーに割り当てる
-;; 何かに設定したい…
+(global-set-key (kbd "<f10>") 'tabbar-forward-tab)
+(global-set-key (kbd "<f9>") 'tabbar-backward-tab)
 
 ;;----- 左側のボタンを消す
 (dolist (btn '(tabbar-buffer-home-button
