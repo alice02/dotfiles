@@ -46,3 +46,8 @@
 (depends-on "monokai-theme")
 (depends-on "py-isort")
 (depends-on "lua-mode")
+(depends-on "multiple-cursors")
+(depends-on "smartrep")
+(depends-on "ruby-mode")
+(depends-on "ruby-end")
+(depends-on "ruby-block")
